@@ -40,7 +40,8 @@ class kvDisplay():
 
     ]
 
-    def __init__(self, output_mode='result'):
+    def __init__(self, config, output_mode='result'):
+        self.config = config
         self.master_list = master_list
         self.view = None
         self.output_mode = output_mode
@@ -50,14 +51,11 @@ class kvDisplay():
         return urwid.get_all_fonts()[-2][1]()
 
 
-    # Pass the complete secret id
     def get_secret(self, secret_name, button):
-        config = boto3.client('ssm', region_name = 'eu-west-1')
         response = config.get_parameter(
             Name = secret_name,
             WithDecryption = True
         )
-        #print(f"\n\n test test ", response)
         button.set_text(('secret_pulled', secret_name))
 
         return response
@@ -74,18 +72,23 @@ class kvDisplay():
     # Display the secret stored in the button
     def display_secret(self, button):
         if button.secret_value == '':
+            self.secret_header.set_text('')
+            self.secret.set_text('')
             self.secret_details.set_text('')
-            self.secret_text.set_text('')
             #self.secret_decoded.set_text('')
         # elif button.secret_value_decoded != '': 
         #     self.secret_details.set_text(('greentext', button.secret_value))
-        #     self.secret_text.set_text('This secret is base64 encoded. Here\'s the decoded version:')
+        #     self.secret.set_text('This secret is base64 encoded. Here\'s the decoded version:')
         #     self.secret_decoded.set_text(('greentext', button.secret_value_decoded))  
         else:
-            self.secret_details.set_text(('greentext', button.secret_value['Parameter']['Value']))
-            self.secret_text.set_text(
+            self.secret_header.set_text('Value:')
+            self.secret.set_text(('greentext', button.secret_value['Parameter']['Value']))
+            self.secret_details.set_text(
                 f"Version: {button.secret_value['Parameter']['Version']}\n"
-                f"Last modified: {button.secret_value['Parameter']['LastModifiedDate']}"
+                f"Last modified: {button.secret_value['Parameter']['LastModifiedDate']}\n"
+                f"Type: {button.secret_value['Parameter']['Type']}\n"
+                f"ARN: {button.secret_value['Parameter']['ARN']}\n"
+                f"Data type: {button.secret_value['Parameter']['DataType']}\n"
             )
             
 
@@ -148,14 +151,17 @@ class kvDisplay():
         self.left_content = urwid.LineBox(self.left_content, title='Parameter list')        
         self.listbox_secrets(master_list)
 
+        self.secret_header = urwid.Text('')
+        self.secret = urwid.Text('')
         self.secret_details = urwid.Text('')
-        self.secret_text = urwid.Text('')
 
         self.secret_details_display = [
+            self.secret_header,
+            div,
+            self.secret,
             div,
             self.secret_details,
             div,
-            self.secret_text,
         ]
 
         self.right_content = urwid.ListBox(self.secret_details_display)
@@ -201,7 +207,7 @@ class kvDisplay():
         self.footer_status.set_text("Status: {} secrets returned".format(str(len(self.list_walker.contents)-1))) #-1 for divider
 
     def copy_to_clipboard(self, button):
-        value = self.listbox.focus.base_widget.secret_value
+        value = self.listbox.focus.base_widget.secret_value['Parameter']['Value']
         selected_secret = self.listbox.focus.base_widget.secret_name
         
         if value != '':
@@ -239,10 +245,10 @@ class kvDisplay():
             self.copy_button.keypress(0, 'enter')
 
 
-def main(master_list):
+def main(master_list, config):
 
     screen = urwid.raw_display.Screen()
-    display = kvDisplay(master_list)
+    display = kvDisplay(master_list, config)
     display.main(screen=screen)
 
 
@@ -275,7 +281,7 @@ print("Loading parameters...\n")
 #)
 
 session = boto3.Session(profile_name = 'dev-automation')
-config = boto3.client('ssm', region_name = 'eu-west-1')
+config = session.client('ssm', region_name = 'eu-west-1')
 next_token = ' '
 master_list = []
 while next_token is not None:
@@ -285,4 +291,4 @@ while next_token is not None:
 
 
 if __name__ == '__main__':
-    sys.exit(main(master_list))
+    sys.exit(main(master_list, config))
