@@ -1,15 +1,13 @@
 import boto3
 from urllib.parse import urlparse
-import os
 import sys
 import base64
-import json
 import argparse
 import urwid
 import pyperclip
 from time import sleep
 from custom_widgets import ListEntry
-import debugpy
+#import debugpy
 
 #debugpy.connect(('localhost',5678))
 
@@ -56,9 +54,14 @@ class kvDisplay():
             Name = secret_name,
             WithDecryption = True
         )
+
+        tag_response = config.list_tags_for_resource(
+            ResourceType = 'Parameter',
+            ResourceId = response['Parameter']['Name']
+        )
         button.set_text(('secret_pulled', secret_name))
 
-        return response
+        return response, tag_response
 
     def is_base64(self, s):
         #base64decode/encode wants a byte sequence not a string
@@ -75,6 +78,7 @@ class kvDisplay():
             self.secret_header.set_text('')
             self.secret.set_text('')
             self.secret_details.set_text('')
+            self.secret_tags.set_text('')
             #self.secret_decoded.set_text('')
         # elif button.secret_value_decoded != '': 
         #     self.secret_details.set_text(('greentext', button.secret_value))
@@ -84,13 +88,21 @@ class kvDisplay():
             self.secret_header.set_text('Value:')
             self.secret.set_text(('greentext', button.secret_value['Parameter']['Value']))
             self.secret_details.set_text(
+                f"Properties:\n\n"
                 f"Version: {button.secret_value['Parameter']['Version']}\n"
                 f"Last modified: {button.secret_value['Parameter']['LastModifiedDate']}\n"
                 f"Type: {button.secret_value['Parameter']['Type']}\n"
                 f"ARN: {button.secret_value['Parameter']['ARN']}\n"
                 f"Data type: {button.secret_value['Parameter']['DataType']}\n"
             )
+
+            if button.secret_tags['TagList']:
+                string = 'Tags:\n\n'
+                for tag in button.secret_tags['TagList']:
+                    string += f"{tag['Key']}: {tag['Value']}\n"
             
+                self.secret_tags.set_text(string)
+
 
     def handle_enter(self, button, other):
         '''
@@ -98,7 +110,7 @@ class kvDisplay():
         and pass it to display_secret
         '''
         #self.secret_details.set_text('Retrieving secret...')
-        button.secret_value = self.get_secret(button.secret_name, button)
+        button.secret_value, button.secret_tags = self.get_secret(button.secret_name, button)
         #if self.is_base64(button.secret_value):
         #    button.secret_value_decoded = base64.b64decode(button.secret_value).decode()
         self.display_secret(button)
@@ -154,18 +166,22 @@ class kvDisplay():
         self.secret_header = urwid.Text('')
         self.secret = urwid.Text('')
         self.secret_details = urwid.Text('')
+        self.secret_tags = urwid.Text('')
 
         self.secret_details_display = [
             self.secret_header,
             div,
             self.secret,
             div,
+            div,
             self.secret_details,
             div,
+            div,
+            self.secret_tags
         ]
 
         self.right_content = urwid.ListBox(self.secret_details_display)
-        self.right_content = urwid.LineBox(self.right_content, title='Secret details')
+        self.right_content = urwid.LineBox(self.right_content, title='Parameter details')
 
         self.content = urwid.Columns([('weight',1.5, self.left_content), self.right_content])
         

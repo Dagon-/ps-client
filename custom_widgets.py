@@ -55,6 +55,7 @@ class ListEntry(urwid.Text):
         self.secret_name = c['Name']
         self.secret_type = c['Type']
         self.secret_value = ""
+        self.secret_tags = []
 
         markup = self.secret_name
         self.__super.__init__(markup)
