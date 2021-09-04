@@ -7,9 +7,6 @@ import urwid
 import pyperclip
 from time import sleep
 from custom_widgets import ListEntry
-#import debugpy
-
-#debugpy.connect(('localhost',5678))
 
 
 class bcolors():
@@ -125,6 +122,9 @@ class kvDisplay():
             self.display_secret(listBox.focus.base_widget)
 
     def listbox_secrets(self, list):
+        '''
+        Create a button for each entry in "list"
+        '''
         for c in list:
             button = ListEntry(c)
             urwid.connect_signal(button, 'click', self.handle_enter, user_args = [button])
