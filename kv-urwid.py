@@ -277,8 +277,8 @@ keyvault_list = []
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--profile", help="AWS cli profile to connect aws with.")
-parser.add_argument("--id", help="Access key ID ")
-parser.add_argument("--secret", help="Access key ID ")
+# parser.add_argument("--id", help="Access key ID ")
+# parser.add_argument("--secret", help="Access key ID ")
 
 args = parser.parse_args()
 
@@ -291,12 +291,17 @@ def get_resources_from(ssm_details):
 
 print("Loading parameters...\n")
 
-#session = boto3.Session(
-#    aws_access_key_id=settings.AWS_SERVER_PUBLIC_KEY,
-#    aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
-#)
+# Pick up a profile, id/key, or let boto3 search for defaults/environment variables
+if args.profile:
+    session = boto3.Session(profile_name = args.profile)
+# elif args.id and args.secret:
+#     session = boto3.Session(
+#         aws_access_key_id = args.id,
+#         aws_secret_access_key = args.secret,
+#     )
+else:    
+    session = boto3.Session()
 
-session = boto3.Session(profile_name = 'dev-automation')
 config = session.client('ssm', region_name = 'eu-west-1')
 next_token = ' '
 master_list = []
