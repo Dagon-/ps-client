@@ -1,13 +1,13 @@
-## Keyvault client
+## About
 
-The keyvault client will
+The paramater store client will
 
-* Retrieve a list of paramstore values in the target account
-* Search parameters names.
+* Retrieve a list of parameter values in the target account
+* Search parameter names.
 * Retrieve paramater values
 
 
-### Requirements
+## Requirements
 
 **For the binary:**
 
@@ -24,7 +24,7 @@ sudo pip3 install urwid pyperclip
 
 
 
-### Passing credentials
+## Passing credentials
 
 ps-client uses AWS cli credentials.
 
@@ -34,7 +34,7 @@ If no profile is passed it will attempt to automatically dectet credentials.
 
 https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
 
-### Usage
+## Usage
 
 `--profile` pass a aws credentail file profile 
 
