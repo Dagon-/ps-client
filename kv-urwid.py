@@ -1,11 +1,9 @@
 import boto3
-from urllib.parse import urlparse
 import sys
-import base64
+#import base64
 import argparse
 import urwid
 import pyperclip
-from time import sleep
 from custom_widgets import ListEntry
 
 
@@ -60,14 +58,14 @@ class kvDisplay():
 
         return response, tag_response
 
-    def is_base64(self, s):
-        #base64decode/encode wants a byte sequence not a string
-        s = (s.encode('utf-8'))
+    # def is_base64(self, s):
+    #     #base64decode/encode wants a byte sequence not a string
+    #     s = (s.encode('utf-8'))
         
-        try:
-            return base64.b64encode(base64.b64decode(s)) == s
-        except Exception:
-            return False
+    #     try:
+    #         return base64.b64encode(base64.b64decode(s)) == s
+    #     except Exception:
+    #         return False
 
     # Display the secret stored in the button
     def display_secret(self, button):
