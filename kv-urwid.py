@@ -131,7 +131,7 @@ class kvDisplay():
     def _create_view(self):
 
         #### header
-        self.input_expr = urwid.Edit(('input expr', 'Search secrets: '))
+        self.input_expr = urwid.Edit(('input expr', 'Search parameters: '))
 
         sb = urwid.BigText('PS Client', self._get_font_instance())
         sb = urwid.Padding(sb, 'center', None)
@@ -184,7 +184,7 @@ class kvDisplay():
         self.content = urwid.Columns([('weight',1.5, self.left_content), self.right_content])
         
         #### footer
-        self.footer_status = urwid.Text("Status: {} secrets loaded".format(str(len(self.list_walker.contents)-1))) #-1 for divider
+        self.footer_status = urwid.Text("Status: {} parameters loaded".format(str(len(self.list_walker.contents)-1))) #-1 for divider
 
         self.copy_button = urwid.Button('F7 - Copy to clipboard')
         urwid.connect_signal(self.copy_button, 'click', self.copy_to_clipboard)
