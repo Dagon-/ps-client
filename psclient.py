@@ -50,7 +50,7 @@ class Parameters():
             current_batch, next_token = self.get_resources_from(ssm_details)
             self.list += current_batch
 
-class Search(Static):
+class SearchContainer(Static):
     
     def compose(self) -> ComposeResult:
         yield Input(placeholder="Search for paramater")
@@ -59,7 +59,8 @@ class Search(Static):
         dt.cursor_type   = "row"
         yield dt
 
-class Results(Static):
+
+class ResultsContainer(Static):
     
     def compose(self) -> ComposeResult:
             yield Pretty(DATA)
@@ -70,27 +71,36 @@ class psSearch(App):
 
     def compose(self) -> ComposeResult:
         with Horizontal():
-            yield Search(classes="column")
-            yield Results(classes="column")
+            yield SearchContainer(classes="column")
+            yield ResultsContainer(classes="column")
         yield Footer()    
 
+    def on_input_changed(self, event: Input.Changed) -> None:
+        # on each keystore filter the parameter list with the
+        # input boc value and refresh the data table.
+        filtered_parameter_list = [
+            item for item in self.parameters.list if event.value in item['Name']
+        ]
+        self.update_table(filtered_parameter_list)
+
     def update_table(self, parameters ) -> None:
+        # Clear the table and add arow for each parameter
         table = self.query_one(DataTable)
         table.clear(columns = True)
         table.add_columns("Parameter name", "Description")
 
-        for parameter in parameters.list:
+        for parameter in parameters:
             if 'Description' not in parameter:
                 parameter['Description'] = ""
             table.add_row(parameter['Name'], parameter['Description'])           
 
     def on_mount(self) -> None:
-        # On startup create the paramter list object and pull the parameters
+        # On startup create the parameter list object,
+        # pull the parameters and update the table
         self.parameters = Parameters()
         self.parameters.refresh()
-        self.update_table(self.parameters)
+        self.update_table(self.parameters.list)
 
 if __name__ == "__main__":
-
     app = psSearch()
     app.run()
