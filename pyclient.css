@@ -1,4 +1,4 @@
-Search {
+SearchContainer {
     layout: vertical;
     background: $boost;
     height: 100%;
@@ -6,7 +6,7 @@ Search {
     padding: 1;
 }
 
-Results {
+ResultsContainer {
     layout: vertical;
     background: $boost;
     height: 100%;

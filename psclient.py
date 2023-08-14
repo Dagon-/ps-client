@@ -63,7 +63,7 @@ class SearchContainer(Static):
 class ResultsContainer(Static):
     
     def compose(self) -> ComposeResult:
-            yield Pretty(DATA)
+        yield Pretty(DATA)
 
 class psSearch(App):
 
