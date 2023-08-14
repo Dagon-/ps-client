@@ -80,7 +80,9 @@ class psSearch(App):
         # input box value and refresh the data table.
         search_terms = event.value.split()
         filtered_parameter_list = [
-            item for item in self.parameters.list if all((term in item['Name']) for term in search_terms)
+            item 
+            for item in self.parameters.list
+            if all((term in item['Name']) for term in search_terms)
         ]
 
         self.update_table(filtered_parameter_list)
