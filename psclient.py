@@ -62,9 +62,6 @@ class Parameters():
             ssm_details = client.describe_parameters(MaxResults = 50, NextToken = next_token)
             current_batch, next_token = self.get_resources_from(ssm_details)
             self.list += current_batch
-        
-    def __init__(self):
-        self.parameters = self.refresh()
 
 class Search(Static):
     
@@ -101,8 +98,10 @@ class psSearch(App):
             table.add_row(parameter['Name'], parameter['Description'])           
 
     def on_mount(self) -> None:
-        parameters = Parameters()
-        self.update_table(parameters)
+        # On startup create the paramter list object and pull the parameters
+        self.parameters = Parameters()
+        self.parameters.refresh()
+        self.update_table(self.parameters)
 
 if __name__ == "__main__":
 
