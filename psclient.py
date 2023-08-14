@@ -77,10 +77,12 @@ class psSearch(App):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         # on each keystore filter the parameter list with the
-        # input boc value and refresh the data table.
+        # input box value and refresh the data table.
+        search_terms = event.value.split()
         filtered_parameter_list = [
-            item for item in self.parameters.list if event.value in item['Name']
+            item for item in self.parameters.list if all((term in item['Name']) for term in search_terms)
         ]
+
         self.update_table(filtered_parameter_list)
 
     def update_table(self, parameters ) -> None:
