@@ -29,7 +29,7 @@ DATA = {
     ]
 }
 
-class Paramaters():
+class Parameters():
 
     list = []
 
@@ -90,21 +90,19 @@ class psSearch(App):
             yield Results(classes="column")
         yield Footer()    
 
-
-    def on_mount(self) -> None:
-    # On start up we set up the boto3 session 
-    # and call a table refresh. This will load
-    # the table with all available parameters    
-
-        parameter = Paramaters()
-
+    def update_table(self, parameters ) -> None:
         table = self.query_one(DataTable)
+        table.clear(columns = True)
         table.add_columns("Parameter name", "Description")
 
-        for parameter in parameter.list:
+        for parameter in parameters.list:
             if 'Description' not in parameter:
                 parameter['Description'] = ""
-            table.add_row(parameter['Name'], parameter['Description'])        
+            table.add_row(parameter['Name'], parameter['Description'])           
+
+    def on_mount(self) -> None:
+        parameters = Parameters()
+        self.update_table(parameters)
 
 if __name__ == "__main__":
 
