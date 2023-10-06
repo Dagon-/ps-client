@@ -5,49 +5,6 @@ from textual.widgets import Input, DataTable
 from textual.widgets import Pretty, Static, Footer, Header
 from textual.containers import Horizontal
 
-DATA = {
-    "title": "Back to the Future",
-    "releaseYear": 1985,
-    "director": "Robert Zemeckis",
-    "genre": "Adventure, Comedy, Sci-Fi",
-    "cast": [
-        {"actor": "Michael J. Fox", "character": "Marty McFly"},
-        {"actor": "Christopher Lloyd", "character": "Dr. Emmett Brown"},
-    ]
-}
-
-# class Boto3Wrapper:
-#     def __init__(self, service_name, region_name):
-#         self.client = boto3.client(service_name, region_name=region_name)
-#         self.resource = boto3.resource(service_name, region_name=region_name)
-
-#     def __getattr__(self, name):
-#         # Check if the method exists in the client
-#         if hasattr(self.client, name):
-#             return getattr(self.client, name)
-#         # Check if the method exists in the resource
-#         elif hasattr(self.resource, name):
-#             return getattr(self.resource, name)
-#         else:
-#             raise AttributeError("'Boto3Wrapper' object has no attribute '{}'".format(name))
-
-#     def set_client(self, service_name, region_name):
-#         #Set the client to a new service and region
-#         self.client = boto3.client(service_name, region_name=region_name)
-
-#     def set_resource(self, service_name, region_name):
-#         #Set the resource to a new service and region
-#         self.resource = boto3.resource(service_name, region_name=region_name)
-
-#     def get_client(self):
-#         #Get the current client
-#         return self.client
-
-#     def get_resource(self):
-#         #Get the current resource
-#         return self.resource
-
-
 class BotoWrapper():
 
     def getclient(self):
@@ -94,11 +51,10 @@ class SearchContainer(Static):
         dt.add_columns("Parameter name", "Description")
         yield dt
 
-
 class ResultsContainer(Static):
     
     def compose(self) -> ComposeResult:
-        yield Pretty(DATA)
+        yield Pretty("")
 
 class psSearch(App):
 
@@ -123,28 +79,53 @@ class psSearch(App):
         self.update_table(filtered_parameter_list)
 
     def on_data_table_row_selected(self, event):
+        '''
+        When the user selects a row we pull the parameter, 
+        merge the response into the parameter list and display the value
+        '''
         table = self.query_one(DataTable)
-        results = self.query_one(Pretty)
+        results_view = self.query_one(Pretty)
 
         param_name = table.get_cell_at((event.cursor_row, 0))
-        #self.client = Parameters.client
+        row_key = event.row_key.value
 
         response = self.client.get_parameter(
             Name = param_name,
             WithDecryption = True
         )
-        results.update(response)
+
+        # The row index matches the parameter list index so merge  
+        # get_parameters response into matching list item. e.g row key 0 is list index 0
+        self.parameters.list[row_key] = response['Parameter'] | self.parameters.list[row_key]
+
+        #results_view.update(response['Parameter']['Value'])
+        results_view.update(self.parameters.list[row_key])
+
+    def on_data_table_row_highlighted(self, event):
+        '''
+        When a row is highlight (NOT selected) display the  
+        corrisponding item in the paramter list
+        '''
+        results_view = self.query_one(Pretty)
+        row_key = event.row_key.value
+
+        results_view.update(self.parameters.list[row_key])
 
     def update_table(self, parameters ) -> None:
-        # Clear the table and add arow for each parameter
+        '''
+        Clear the table and add a row for each parameter that's been passed.
+        '''
+
         table = self.query_one(DataTable)
         table.clear(columns = False)
 
-        for parameter in parameters:
+        # Add parameter to the table. Set row key to be the index of the 
+        # parameter in the list so we can cross referance later.
+        for index, parameter in enumerate(parameters):
             if 'Description' not in parameter:
                 parameter['Description'] = ""
-            table.add_row(parameter['Name'], parameter['Description'])           
-
+            table.add_row(parameter['Name'], parameter['Description'], key = index)           
+            
     def on_mount(self) -> None:
         # On startup create the parameter list object,
         # pull the parameters and update the table
