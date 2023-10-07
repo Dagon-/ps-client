@@ -1,5 +1,6 @@
 import argparse
 import boto3
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.widgets import Input, DataTable
 from textual.widgets import Pretty, Static, Footer, Header
@@ -40,6 +41,11 @@ class Parameters():
             ssm_details = self.client.describe_parameters(MaxResults = 50, NextToken = next_token)
             current_batch, next_token = self.get_resources_from(ssm_details)
             self.list += current_batch
+
+        # Adding the list index as a key in the dict will prevent us needing
+        # to repeatedly enumerate the list to find the index value later on
+        for index, parameter in enumerate(self.list):
+            parameter["IndexPosition"] = index
 
 class SearchContainer(Static):
     
@@ -86,14 +92,17 @@ class psSearch(App):
         table = self.query_one(DataTable)
         results_view = self.query_one(Pretty)
 
-        param_name = table.get_cell_at((event.cursor_row, 0))
+        # Cast to string in case the cell has previously been set to a Text object
+        param_name = str(table.get_cell_at((event.cursor_row, 0)))
+        description = str(table.get_cell_at((event.cursor_row, 1)))
+
         row_key = event.row_key.value
 
         response = self.client.get_parameter(
             Name = param_name,
             WithDecryption = True
         )
-
+        
         # The row index matches the parameter list index so merge  
         # get_parameters response into matching list item. e.g row key 0 is list index 0
         self.parameters.list[row_key] = response['Parameter'] | self.parameters.list[row_key]
@@ -101,10 +110,13 @@ class psSearch(App):
         #results_view.update(response['Parameter']['Value'])
         results_view.update(self.parameters.list[row_key])
 
+        table.update_cell_at((event.cursor_row, 0), Text(param_name, style = "green"))
+        table.update_cell_at((event.cursor_row, 1), Text(description, style = "green"))
+
     def on_data_table_row_highlighted(self, event):
         '''
         When a row is highlight (NOT selected) display the  
-        corrisponding item in the paramter list
+        corrisponding item from the paramter list
         '''
         results_view = self.query_one(Pretty)
         row_key = event.row_key.value
@@ -121,11 +133,20 @@ class psSearch(App):
 
         # Add parameter to the table. Set row key to be the index of the 
         # parameter in the list so we can cross referance later.
-        for index, parameter in enumerate(parameters):
+        for parameter in parameters:
             if 'Description' not in parameter:
                 parameter['Description'] = ""
-            table.add_row(parameter['Name'], parameter['Description'], key = index)           
+
+            if 'Value' in  parameter:
+                name = Text(parameter['Name'], style = "green")
+                description = Text(parameter['Description'], style = "green")
+            else:
+                name = parameter['Name']
+                description = parameter['Description']
+
+            table.add_row(name, description, key = parameter['IndexPosition'])           
             
+
     def on_mount(self) -> None:
         # On startup create the parameter list object,
         # pull the parameters and update the table
