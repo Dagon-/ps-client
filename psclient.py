@@ -68,7 +68,7 @@ class ResultsContainer(Static):
 
 class psSearch(App):
 
-    CSS_PATH = "pyclient.css"
+    CSS_PATH = "pyclient.tcss"
 
     def compose(self) -> ComposeResult:
         with Horizontal():
