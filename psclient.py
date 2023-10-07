@@ -1,5 +1,6 @@
 import argparse
 import boto3
+from botocore.exceptions import ClientError
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.widgets import Input, DataTable
@@ -38,9 +39,12 @@ class Parameters():
         next_token = ' '
 
         while next_token is not None:
-            ssm_details = self.client.describe_parameters(MaxResults = 50, NextToken = next_token)
-            current_batch, next_token = self.get_resources_from(ssm_details)
-            self.list += current_batch
+            try:
+                ssm_details = self.client.describe_parameters(MaxResults = 50, NextToken = next_token)
+                current_batch, next_token = self.get_resources_from(ssm_details)
+                self.list += current_batch
+            except ClientError as e:
+                print(e.response['Error']['Code'])
 
         # Adding the list index as a key in the dict will prevent us needing
         # to repeatedly enumerate the list to find the index value later on
@@ -97,11 +101,14 @@ class psSearch(App):
         description = str(table.get_cell_at((event.cursor_row, 1)))
 
         row_key = event.row_key.value
-
-        response = self.client.get_parameter(
-            Name = param_name,
-            WithDecryption = True
-        )
+        
+        try:
+            response = self.client.get_parameter(
+                Name = param_name,
+                WithDecryption = True
+            )
+        except ClientError as e:
+            print(e.response['Error']['Code'])
         
         # The row index matches the parameter list index so merge  
         # get_parameters response into matching list item. e.g row key 0 is list index 0
