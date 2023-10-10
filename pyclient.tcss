@@ -17,7 +17,7 @@ ResultsContainer {
 DataTable {
     background: $boost;
     border: solid lightblue;
-    height: 1fr;
+    height: 1fr;        
 }
 
 Pretty {
@@ -25,6 +25,18 @@ Pretty {
     background: $boost;
     height: 100%;
     border: solid lightblue;
+}
+Input {
+    width: 1fr;
+    height: 3;
+}
+
+#search {
+    height: auto;
+}
+
+Button {
+    margin: 0 1;
 }
 
 .column {

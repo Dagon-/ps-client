@@ -3,7 +3,7 @@ import boto3
 from botocore.exceptions import ClientError
 from rich.text import Text
 from textual.app import App, ComposeResult
-from textual.widgets import Input, DataTable
+from textual.widgets import Input, Button, DataTable
 from textual.widgets import Pretty, Static, Footer, Header
 from textual.containers import Horizontal
 
@@ -54,7 +54,9 @@ class Parameters():
 class SearchContainer(Static):
     
     def compose(self) -> ComposeResult:
-        yield Input(placeholder="Search for paramater")
+        with Horizontal(id = "search"):
+            yield Input(placeholder="Search for parameter")
+            yield Button("Clear")
 
         dt = DataTable()
         dt.cursor_type = "row"
@@ -75,6 +77,10 @@ class psSearch(App):
             yield SearchContainer(classes="column")
             yield ResultsContainer(classes="column")
         yield Footer()    
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        input = self.query_one(Input)
+        input.clear()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         # on each keystroke filter the parameter list with the
