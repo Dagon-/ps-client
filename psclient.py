@@ -2,9 +2,10 @@ import argparse
 import boto3
 from botocore.exceptions import ClientError
 from rich.text import Text
+from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Input, Button, DataTable
-from textual.widgets import Pretty, Static, Footer, Header
+from textual.widgets import Pretty, Static, Footer
 from textual.containers import Horizontal
 
 class BotoWrapper():
@@ -36,6 +37,7 @@ class Parameters():
         return resources, next_token
     
     def refresh(self):
+        self.list = []
         next_token = ' '
 
         while next_token is not None:
@@ -56,7 +58,7 @@ class SearchContainer(Static):
     def compose(self) -> ComposeResult:
         with Horizontal(id = "search"):
             yield Input(placeholder="Search for parameter")
-            yield Button("Clear")
+            yield Button("Clear", variant="default")
 
         dt = DataTable()
         dt.cursor_type = "row"
@@ -71,6 +73,17 @@ class ResultsContainer(Static):
 class psSearch(App):
 
     CSS_PATH = "pyclient.tcss"
+    BINDINGS = [
+        ("ctrl-c", "quit", "Quit"),
+        ("f5", "refresh_table()", "Refresh parameters")
+    ]
+
+    def action_refresh_table(self) -> None:
+        '''
+        Keybing action connected to F5
+        '''
+        self.parameters.refresh()
+        self.update_table(self.parameters.list)
 
     def compose(self) -> ComposeResult:
         with Horizontal():
@@ -93,6 +106,11 @@ class psSearch(App):
         ]
 
         self.update_table(filtered_parameter_list)
+
+    # def on_key(self, event: events.Key) -> None:
+    #     if event.key == "f5":
+    #         self.parameters.refresh()
+    #         self.update_table(self.parameters.list)
 
     def on_data_table_row_selected(self, event):
         '''
@@ -140,7 +158,6 @@ class psSearch(App):
         '''
         Clear the table and add a row for each parameter that's been passed.
         '''
-
         table = self.query_one(DataTable)
         table.clear(columns = False)
 
