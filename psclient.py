@@ -1,4 +1,5 @@
 import argparse
+import pyperclip
 import boto3
 from botocore.exceptions import ClientError
 from rich.text import Text
@@ -75,7 +76,8 @@ class psSearch(App):
     CSS_PATH = "pyclient.tcss"
     BINDINGS = [
         ("ctrl-c", "quit", "Quit"),
-        ("f5", "refresh_table()", "Refresh parameters")
+        ("f5", "refresh_table()", "Refresh parameters"),
+        ("f6", "copy_to_clipboard()", "Copy value to clipboard")
     ]
 
     def action_refresh_table(self) -> None:
@@ -85,10 +87,16 @@ class psSearch(App):
         self.parameters.refresh()
         self.update_table(self.parameters.list)
 
+    def action_copy_to_clipboard(self):
+        #table = self.query_one(DataTable)
+        
+        if 'Value' in self.parameters.list[self.highlighted_row_key]:
+            pyperclip.copy(self.parameters.list[self.highlighted_row_key]['Value'])
+
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield SearchContainer(classes="column")
-            yield ResultsContainer(classes="column")
+            yield ResultsContainer(classes="column") 
         yield Footer()    
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -153,6 +161,8 @@ class psSearch(App):
         row_key = event.row_key.value
 
         results_view.update(self.parameters.list[row_key])
+        # Track the highlighted row. We'll use this elsewhere
+        self.highlighted_row_key = row_key
 
     def update_table(self, parameters ) -> None:
         '''
