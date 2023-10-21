@@ -1,13 +1,16 @@
 import argparse
 import pyperclip
 import boto3
+import re
 from botocore.exceptions import ClientError
 from rich.text import Text
+from textual.app import events
 from textual.app import App, ComposeResult
 from textual.widgets import Input, Button, DataTable
 from textual.widgets import Pretty, Static, Footer
 from textual.containers import Horizontal
 from textual.worker import Worker
+from textual.coordinate import Coordinate
 
 class BotoWrapper():
 
@@ -114,10 +117,28 @@ class psSearch(App):
 
         self.update_table(filtered_parameter_list)
 
-    # def on_key(self, event: events.Key) -> None:
-    #     if event.key == "f5":
-    #         self.parameters.refresh()
-    #         self.update_table(self.parameters.list)
+    def on_key(self, event: events.Key) -> None:
+        '''
+        On up/down move focus to datatable. On other keys move focus to input.
+        Pass the keystoke to the newly foscsued widget. This allow the user
+        to type and scroll without needing to manually tab through the widgets. 
+        '''
+        input = self.query_one(Input)
+        table = self.query_one(DataTable)
+
+        if event.key == "down" and input.has_focus:
+            table.focus()
+            table.move_cursor(row = table.cursor_row + 1)
+        elif event.key == "up" and input.has_focus:
+            table.focus()
+            table.move_cursor(row = table.cursor_row - 1)
+        # We only want to pass single characheters back to the input.    
+        # If we don't check lenght we will capture unwanted keys like "up" and "Down"
+        # This isn't perfect as it only sends the listed characters back to the input.
+        elif table.has_focus and len(event.key) == 1: 
+            if re.match('[0-9a-zA-Z_.\-/]', event.key):
+                input.focus()
+                input.value = input.value + event.key
 
     def on_data_table_row_selected(self, event):
         '''
