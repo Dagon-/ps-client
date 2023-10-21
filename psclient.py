@@ -3,11 +3,11 @@ import pyperclip
 import boto3
 from botocore.exceptions import ClientError
 from rich.text import Text
-from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Input, Button, DataTable
 from textual.widgets import Pretty, Static, Footer
 from textual.containers import Horizontal
+from textual.worker import Worker
 
 class BotoWrapper():
 
@@ -37,7 +37,7 @@ class Parameters():
         next_token = ssm_details.get('NextToken', None)
         return resources, next_token
     
-    def refresh(self):
+    async def refresh(self):
         self.list = []
         next_token = ' '
 
@@ -53,7 +53,6 @@ class Parameters():
         # to repeatedly enumerate the list to find the index value later on
         for index, parameter in enumerate(self.list):
             parameter["IndexPosition"] = index
-
 class SearchContainer(Static):
     
     def compose(self) -> ComposeResult:
@@ -84,12 +83,10 @@ class psSearch(App):
         '''
         Keybing action connected to F5
         '''
-        self.parameters.refresh()
-        self.update_table(self.parameters.list)
+        self.display_loading_indicator(True)
+        self.run_worker(self.parameters.refresh(), thread = True)
 
-    def action_copy_to_clipboard(self):
-        #table = self.query_one(DataTable)
-        
+    def action_copy_to_clipboard(self):        
         if 'Value' in self.parameters.list[self.highlighted_row_key]:
             pyperclip.copy(self.parameters.list[self.highlighted_row_key]['Value'])
 
@@ -104,8 +101,10 @@ class psSearch(App):
         input.clear()
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        # on each keystroke filter the parameter list with the
-        # input box value and refresh the data table.
+        '''
+        On each keystroke filter the parameter list with the
+        input box value and refresh the data table.
+        '''
         search_terms = event.value.split()
         filtered_parameter_list = [
             item 
@@ -160,14 +159,17 @@ class psSearch(App):
         results_view = self.query_one(Pretty)
         row_key = event.row_key.value
 
+        print(f"ROW KEY IS {row_key}")
+        print(f"PARAMETER IS {self.parameters.list[row_key]}")
+
         results_view.update(self.parameters.list[row_key])
         # Track the highlighted row. We'll use this elsewhere
         self.highlighted_row_key = row_key
 
-    def update_table(self, parameters ) -> None:
+    def update_table(self, parameters) -> None:
         '''
         Clear the table and add a row for each parameter that's been passed.
-        '''
+        '''        
         table = self.query_one(DataTable)
         table.clear(columns = False)
 
@@ -185,18 +187,33 @@ class psSearch(App):
                 description = parameter['Description']
 
             table.add_row(name, description, key = parameter['IndexPosition'])           
-            
+
+        # Clear loading indicator    
+        self.display_loading_indicator(False)
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        """Called when the worker state changes."""
+        if event.worker.is_finished:
+            self.update_table(self.parameters.list)
+
+    def display_loading_indicator(self, status):
+        table = self.query_one(DataTable)
+        table.loading = status        
 
     def on_mount(self) -> None:
-        # On startup create the parameter list object,
-        # pull the parameters and update the table
+        '''
+        On startup create the parameter list object,
+        pull the parameters and update the table. Data load
+        will be handled asyncronizely to the GUI startup.
+        '''
+        
         session = BotoWrapper()
         self.client = session.getclient()
 
         self.parameters = Parameters(self.client)
-        self.parameters.refresh()
+        self.run_worker(self.parameters.refresh(), thread = True)
 
-        self.update_table(self.parameters.list)
+        self.display_loading_indicator(True)
 
 if __name__ == "__main__":
     app = psSearch()
