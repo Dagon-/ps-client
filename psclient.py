@@ -10,7 +10,6 @@ from textual.widgets import Input, Button, DataTable
 from textual.widgets import Pretty, Static, Footer
 from textual.containers import Horizontal
 from textual.worker import Worker
-from textual.coordinate import Coordinate
 
 class BotoWrapper():
 
@@ -91,9 +90,10 @@ class psSearch(App):
         self.display_loading_indicator(True)
         self.run_worker(self.parameters.refresh(), thread = True)
 
-    def action_copy_to_clipboard(self):        
-        if 'Value' in self.parameters.list[self.highlighted_row_key]:
-            pyperclip.copy(self.parameters.list[self.highlighted_row_key]['Value'])
+    def action_copy_to_clipboard(self):
+        table = self.query_one(DataTable)  
+        if 'Value' in self.parameters.list[table.cursor_row]:
+            pyperclip.copy(self.parameters.list[table.cursor_row]['Value'])
 
     def compose(self) -> ComposeResult:
         with Horizontal():
@@ -139,8 +139,7 @@ class psSearch(App):
             if re.match('[0-9a-zA-Z_.\-/]', event.key):
                 input.focus()
                 input.value = input.value + event.key
-        elif table.has_focus and len(event.key) > 1:
-            if event.key == "backspace":
+        elif event.key == "backspace" and table.has_focus:
                 input.focus()
                 input.action_delete_left()
 
@@ -180,8 +179,6 @@ class psSearch(App):
         print(f"PARAMETER IS {self.parameters.list[row_key]}")
 
         results_view.update(self.parameters.list[row_key])
-        # Track the highlighted row. We'll use this elsewhere
-        self.highlighted_row_key = row_key
 
     def update_table(self, parameters) -> None:
         '''
