@@ -116,9 +116,10 @@ class psSearch(App):
 
     def on_key(self, event: events.Key) -> None:
         '''
+        Perform actions on widgets not in focus. This allow the user
+        to type and scroll without needing to manually tab through the widgets.
         On up/down move focus to datatable. On other keys move focus to input.
-        Pass the keystoke to the newly foscsued widget. This allow the user
-        to type and scroll without needing to manually tab through the widgets. 
+        Pass the keystoke to the newly foscsued widget.
         '''
         input = self.query_one(Input)
         table = self.query_one(DataTable)
@@ -129,13 +130,19 @@ class psSearch(App):
         elif event.key == "up" and input.has_focus:
             table.focus()
             table.move_cursor(row = table.cursor_row - 1)
+        elif event.key == "enter" and input.has_focus:
+            table.action_select_cursor() # Triggers on_data_table_row_selected
+        elif table.has_focus and len(event.key) == 1: 
         # We only want to pass single characheters back to the input.    
         # If we don't check lenght we will capture unwanted keys like "up" and "Down"
         # This isn't perfect as it only sends the listed characters back to the input.
-        elif table.has_focus and len(event.key) == 1: 
             if re.match('[0-9a-zA-Z_.\-/]', event.key):
                 input.focus()
                 input.value = input.value + event.key
+        elif table.has_focus and len(event.key) > 1:
+            if event.key == "backspace":
+                input.focus()
+                input.action_delete_left()
 
     def on_data_table_row_selected(self, event):
         '''
@@ -149,21 +156,13 @@ class psSearch(App):
         param_name = str(table.get_cell_at((event.cursor_row, 0)))
         description = str(table.get_cell_at((event.cursor_row, 1)))
 
+        response = self._get_parameter_value(param_name)
+        
         row_key = event.row_key.value
-        
-        try:
-            response = self.client.get_parameter(
-                Name = param_name,
-                WithDecryption = True
-            )
-        except ClientError as e:
-            print(e.response['Error']['Code'])
-        
         # The row index matches the parameter list index so merge  
         # get_parameters response into matching list item. e.g row key 0 is list index 0
         self.parameters.list[row_key] = response['Parameter'] | self.parameters.list[row_key]
 
-        #results_view.update(response['Parameter']['Value'])
         results_view.update(self.parameters.list[row_key])
 
         table.update_cell_at((event.cursor_row, 0), Text(param_name, style = "green"))
@@ -232,6 +231,37 @@ class psSearch(App):
         self.run_worker(self.parameters.refresh(), thread = True)
 
         self.display_loading_indicator(True)
+
+    # def _update_datatable_row_with_value(self):
+    #     table = self.query_one(DataTable)
+    #     results_view = self.query_one(Pretty)
+
+    #     # Cast to string in case the cell has previously been set to a Text object
+    #     param_name = str(table.get_cell_at((event.cursor_row, 0)))
+    #     description = str(table.get_cell_at((event.cursor_row, 1)))
+
+    #     response = self._get_parameter_value(param_name)
+        
+    #     row_key = event.row_key.value
+    #     # The row index matches the parameter list index so merge  
+    #     # get_parameters response into matching list item. e.g row key 0 is list index 0
+    #     self.parameters.list[row_key] = response['Parameter'] | self.parameters.list[row_key]
+
+    #     results_view.update(self.parameters.list[row_key])
+
+    #     table.update_cell_at((event.cursor_row, 0), Text(param_name, style = "green"))
+    #     table.update_cell_at((event.cursor_row, 1), Text(description, style = "green"))
+        
+    def _get_parameter_value(self, parameter_name):
+        try:
+            response = self.client.get_parameter(
+                Name = parameter_name,
+                WithDecryption = True
+            )
+        except ClientError as e:
+            print(e.response['Error']['Code'])
+        
+        return response 
         
     def _search_terms_from_input(self):
         input = self.query_one(Input)
