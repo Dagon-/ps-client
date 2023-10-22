@@ -111,13 +111,8 @@ class psSearch(App):
         input box value and refresh the data table.
         '''
         search_terms = event.value.split()
-        filtered_parameter_list = [
-            item 
-            for item in self.parameters.list
-            if all((term in item['Name']) for term in search_terms)
-        ]
-
-        self.update_table(filtered_parameter_list)
+        filtered_list = self._filter_parameters_with(search_terms)
+        self.update_table(filtered_list)
 
     def on_key(self, event: events.Key) -> None:
         '''
@@ -216,7 +211,8 @@ class psSearch(App):
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         """Called when the worker state changes."""
         if event.worker.is_finished:
-            self.update_table(self.parameters.list)
+            filtered_list = self._filter_parameters_with(self._search_terms_from_input())
+            self.update_table(filtered_list)
 
     def display_loading_indicator(self, status):
         table = self.query_one(DataTable)
@@ -236,6 +232,19 @@ class psSearch(App):
         self.run_worker(self.parameters.refresh(), thread = True)
 
         self.display_loading_indicator(True)
+        
+    def _search_terms_from_input(self):
+        input = self.query_one(Input)
+        search_terms = input.value.split()
+        return search_terms
+
+    def _filter_parameters_with(self, search_terms):   
+        filtered_parameter_list = [
+            item 
+            for item in self.parameters.list
+            if all((term in item['Name']) for term in search_terms)
+        ]
+        return filtered_parameter_list        
 
 if __name__ == "__main__":
     app = psSearch()
