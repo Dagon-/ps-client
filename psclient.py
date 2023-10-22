@@ -27,6 +27,7 @@ class BotoWrapper():
 
         self.client = session.client('ssm')
         return self.client
+    
 class Parameters():
 
     list = []
@@ -56,6 +57,7 @@ class Parameters():
         # to repeatedly enumerate the list to find the index value later on
         for index, parameter in enumerate(self.list):
             parameter["IndexPosition"] = index
+            
 class SearchContainer(Static):
     
     def compose(self) -> ComposeResult:
@@ -199,7 +201,6 @@ class psSearch(App):
         for parameter in parameters:
             if 'Description' not in parameter:
                 parameter['Description'] = ""
-
             if 'Value' in  parameter:
                 name = Text(parameter['Name'], style = "green")
                 description = Text(parameter['Description'], style = "green")
