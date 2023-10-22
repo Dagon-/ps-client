@@ -232,26 +232,6 @@ class psSearch(App):
 
         self.display_loading_indicator(True)
 
-    # def _update_datatable_row_with_value(self):
-    #     table = self.query_one(DataTable)
-    #     results_view = self.query_one(Pretty)
-
-    #     # Cast to string in case the cell has previously been set to a Text object
-    #     param_name = str(table.get_cell_at((event.cursor_row, 0)))
-    #     description = str(table.get_cell_at((event.cursor_row, 1)))
-
-    #     response = self._get_parameter_value(param_name)
-        
-    #     row_key = event.row_key.value
-    #     # The row index matches the parameter list index so merge  
-    #     # get_parameters response into matching list item. e.g row key 0 is list index 0
-    #     self.parameters.list[row_key] = response['Parameter'] | self.parameters.list[row_key]
-
-    #     results_view.update(self.parameters.list[row_key])
-
-    #     table.update_cell_at((event.cursor_row, 0), Text(param_name, style = "green"))
-    #     table.update_cell_at((event.cursor_row, 1), Text(description, style = "green"))
-        
     def _get_parameter_value(self, parameter_name):
         try:
             response = self.client.get_parameter(
