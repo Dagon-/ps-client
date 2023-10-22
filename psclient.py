@@ -162,7 +162,7 @@ class psSearch(App):
         # get_parameters response into matching list item. e.g row key 0 is list index 0
         self.parameters.list[row_key] = response['Parameter'] | self.parameters.list[row_key]
 
-        results_view.update(self.parameters.list[row_key])
+        results_view.update(self.parameters.list[row_key]['Value'])
 
         table.update_cell_at((event.cursor_row, 0), Text(param_name, style = "green"))
         table.update_cell_at((event.cursor_row, 1), Text(description, style = "green"))
@@ -178,7 +178,12 @@ class psSearch(App):
         print(f"ROW KEY IS {row_key}")
         print(f"PARAMETER IS {self.parameters.list[row_key]}")
 
-        results_view.update(self.parameters.list[row_key])
+        # If a parameter value hasn't been pulled yet the parameter won't contain "value"
+        if 'Value' in self.parameters.list[row_key]:
+            results_view.update(self.parameters.list[row_key]['Value'])
+        else:
+            results_view.update('')
+            
 
     def update_table(self, parameters) -> None:
         '''
