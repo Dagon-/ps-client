@@ -91,9 +91,8 @@ class psSearch(App):
         self.run_worker(self.parameters.refresh(), thread = True)
 
     def action_copy_to_clipboard(self):
-        table = self.query_one(DataTable)  
-        if 'Value' in self.parameters.list[table.cursor_row]:
-            pyperclip.copy(self.parameters.list[table.cursor_row]['Value'])
+        if 'Value' in self.parameters.list[self.highlighted_row_key]:
+            pyperclip.copy(self.parameters.list[self.highlighted_row_key]['Value'])
 
     def compose(self) -> ComposeResult:
         with Horizontal():
@@ -166,6 +165,10 @@ class psSearch(App):
 
         table.update_cell_at((event.cursor_row, 0), Text(param_name, style = "green"))
         table.update_cell_at((event.cursor_row, 1), Text(description, style = "green"))
+        
+        # Track the highlighted row
+        self.highlighted_row_key = row_key
+        
 
     def on_data_table_row_highlighted(self, event):
         '''
@@ -174,9 +177,6 @@ class psSearch(App):
         '''
         results_view = self.query_one(Pretty)
         row_key = event.row_key.value
-
-        print(f"ROW KEY IS {row_key}")
-        print(f"PARAMETER IS {self.parameters.list[row_key]}")
 
         # If a parameter value hasn't been pulled yet the parameter won't contain "value"
         if 'Value' in self.parameters.list[row_key]:
