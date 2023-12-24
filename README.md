@@ -4,9 +4,10 @@
 
 The parameter store client will
 
-* Retrieve a list of parameter values in the target account
+* Retrieve a list of AWS SSM parameter values in the target account.
 * Search for parameter names.
-* Retrieve paramater values
+* Retrieve parameter values.
+* Copy values to the clipboard.
 
 
 ## Passing credentials
