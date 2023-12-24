@@ -19,9 +19,13 @@ class BotoWrapper():
         parser.add_argument("--region", help = "Set AWS region.")
         args = parser.parse_args()
     
-        if args.profile:
+        if args.profile and args.region:
+            session = boto3.Session(profile_name = args.profile, region_name = args.region)
+        elif args.profile:
             session = boto3.Session(profile_name = args.profile)
-        else:    
+        elif args.region:
+            session = boto3.Session(region_name = args.region)
+        else:        
             session = boto3.Session()
 
         self.client = session.client('ssm')

@@ -1,45 +1,37 @@
 ## About
 
-The paramater store client will
+![](https://raw.githubusercontent.com/Dagon-/ps-client/dev/images/demo.gif)
 
-* Retrieve a list of parameter values in the target account
-* Search parameter names.
-* Retrieve paramater values
+The parameter store client will
 
-
-## Requirements
-
-**For the binary:**
-
-Set the file as executable and run.
-
-**For the Python script:**
-
-Python 3 and a few modules are needed. Assuming you already have python3 and pip3 on your system do the following:
-
-```
-sudo pip3 install urwid pyperclip
-```
-
-
+* Retrieve a list of AWS SSM parameter values in the target account.
+* Search for parameter names.
+* Retrieve parameter values.
+* Copy values to the clipboard.
 
 
 ## Passing credentials
 
-ps-client uses AWS cli credentials.
+ps-client uses AWS credentials.
 
-A profile can be passed with the `--profile` switch
+A profile can be passed with the `--profile` switch and the region set with `--region`
 
-If no profile is passed it will attempt to automatically dectet credentials.
+If no profile is passed it will attempt to automatically detect credentials in the following order of precedence.
 
-https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
+* Environment variables
+* Shared credential file (~/.aws/credentials)
+
+* AWS config file (~/.aws/config)
+
+* Assume Role provider
 
 ## Usage
 
-`--profile` pass a aws credentail file profile 
+```
+psclient
 
+psclient --profile
 
+psclient --region eu-west-1
 
-`ps-client`
-
-`ps-client --profile dev`
+psclient --profile test --region eu-west-1
