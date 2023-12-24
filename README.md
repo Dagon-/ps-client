@@ -1,6 +1,6 @@
 ## About
 
-![](https://github.com/Dagon-/ps-client/demo.gif)
+![](https://github.com/Dagon-/ps-client/blob/dev/images/demo.gif)
 
 The parameter store client will
 
