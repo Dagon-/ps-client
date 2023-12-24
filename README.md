@@ -1,5 +1,7 @@
 ## About
 
+![](https://github.com/Dagon-/ps-client/demo.gif)
+
 The parameter store client will
 
 * Retrieve a list of parameter values in the target account
