@@ -2,7 +2,7 @@
 
 ![](https://raw.githubusercontent.com/Dagon-/ps-client/dev/images/demo.gif)
 
-The parameter store client will
+The parameter store client is a cli tool which will
 
 * Retrieve a list of AWS SSM parameter values in the target account.
 * Search for parameter names.
